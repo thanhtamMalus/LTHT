@@ -12,13 +12,14 @@
 .section .text
 .globl _start
 _start:
-    # input chuoi
+    # In thông báo yêu cầu nhập chuỗi
     movl $4, %eax
     movl $1, %ebx
     movl $msg_inp, %ecx
     movl $len_inp, %edx
     int $0x80
 
+    # input chuoi
     movl $3, %eax
     movl $0, %ebx
     movl $input, %ecx
@@ -32,13 +33,14 @@ _start:
     movl $1, %edx
     int $0x80
 
-    # input n
+    # In thông báo yêu cầu nhập n
     movl $4, %eax
     movl $1, %ebx
     movl $msg_n, %ecx
     movl $len_n, %edx
     int $0x80
 
+    # input n
     movl $3, %eax
     movl $0, %ebx
     movl $n, %ecx
@@ -58,16 +60,23 @@ _loop:
     movb (%eax), %bl        
     addb %dl, %bl            
     
+    #kiểm tra xem có vượt qua 'z' không
     cmpb $122, %bl           
-    jle _khongVuot           
+    jle _khongVuot  
+
+    #nếu vượt thì trừ đi 26 để quay về theo vòng         
     subb $26, %bl           
 
+    #không vượt thì cộng như thường
 _khongVuot:
     movb %bl, (%eax)         
-    incl %eax                
-    decl %ecx                
+    incl %eax      #trỏ sang kí tự tiếp theo          
+    decl %ecx       #giảm biến %ecx đi 1 đơn vị
+
+    #nếu %ecx không bằng 0, nhảy về dòng lặp để xét tiếp               
     jnz _loop              
 
+    #sau khi xử lí xong
 _done:
     # output
     movl $4, %eax           
@@ -76,7 +85,7 @@ _done:
     movl $4, %edx           
     int $0x80                
 
-    # thoat
+    # Thoát
     movl $1, %eax
     xorl %ebx, %ebx
     int $0x80
