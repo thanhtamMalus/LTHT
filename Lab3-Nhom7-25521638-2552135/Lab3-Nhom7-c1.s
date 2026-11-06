@@ -1,4 +1,5 @@
 .section .data
+#Cac loai thong bao ra man hinh
 msg_tong: .string "Tong: "
 len_tong = . - msg_tong - 1
 
@@ -17,13 +18,13 @@ len_du= . - msg_du - 1
 msg_div: .string "\nKhong chia duoc cho 0\n"
 len_div= . - msg_div - 1
 
-newline: .string "\n"
+newline: .string "\n"		#Xuong dong
 
 .section .bss
-.lcomm buf1, 32
-.lcomm buf2, 32
-.lcomm numA, 4
-.lcomm numB, 4
+.lcomm buf1, 32			#Chuoi so 1
+.lcomm buf2, 32			#Chuoi so 2
+.lcomm numA, 4			#So nguyen thu 1
+.lcomm numB, 4			#So nguyen thu 2
 
 .section .text
 
@@ -32,16 +33,16 @@ newline: .string "\n"
 _start:
 	#---Doc so thu 1
 	pushl $32		#Day kich thuoc buffer (32) vao stack
-	pushl $buf1		#Day dia chi buf2 vao stack
-	call read_line
-	addl $8, %esp		#Don dep stack
+	pushl $buf1		#Day dia chi buf1 vao stack
+	call read_line		#Ham doc chuoi tu ban phim
+	addl $8, %esp		#Don dep stack 8 bytes
 
-	pushl $buf1
-	call atoi
-	addl $4, %esp
-	movl %eax, numA
+	pushl $buf1		#Day buf1 vao stack
+	call atoi		#Ham chuyen chuoi thanh so nguyen
+	addl $4, %esp		#Don dep stack 4 bytes
+	movl %eax, numA		
  
-	#---Doc so thu 2
+	#---Doc so thu 2 [Tuong tu nhu so 1]
 	pushl $32
         pushl $buf2
         call read_line
@@ -130,8 +131,9 @@ _start:
         movl $1, %edx
         int $0x80
 	
-	jmp sys_exit
+	jmp sys_exit		#Ket thuc code
 
+#Xu li khi A chia cho 0
 div_zero: 
 	movl $4, %eax	
 	movl $1, %ebx
@@ -140,6 +142,7 @@ div_zero:
 	int $0x80
 	jmp sys_exit
 
+#In xuong dong
 print_exit:
 	movl $4, %eax
 	movl $1, %ebx
@@ -147,10 +150,12 @@ print_exit:
 	movl $1, %edx		#Xuong 1 byte
 	int $0x80
 
+#Ket thuc chuong trinh
 sys_exit:
 	movl $1, %eax
 	xorl %ebx, %ebx		#Tra ve ma loi 0
 	int $0x80
+
 
 read_line:
 	pushl %ebp		#Luu ebp cu cua ham goi
@@ -164,69 +169,72 @@ read_line:
 	xorl %ebx, %ebx		#Khoi tao bien dem so byte ebx=0
 
 read_loop:
-    	cmpl %ecx, %ebx
+    	cmpl %ecx, %ebx		#So sanh so byte da doc, oke thi end
     	jge read_done
 
-    	pushl %ebx
-    	movl $3, %eax
-    	movl $0, %ebx
-    	leal (%esi), %ecx
+    	pushl %ebx		#Luu ebx
+    	movl $3, %eax		#sys_read
+    	movl $0, %ebx		#stdin
+    	leal (%esi), %ecx	
     	addl (%esp), %ecx
-    	movl $1, %edx
-    	int $0x80
-    	popl %ebx
-
-    	cmpl $0, %eax
+    	movl $1, %edx		#Read tung byte
+    	int $0x80	
+    	popl %ebx		#Khoi phuc ebx
+	
+    	cmpl $0, %eax		#Kiem tra read het chua
     	jle read_done
 
-    	movb (%esi, %ebx, 1), %al
+    	movb (%esi, %ebx, 1), %al #Kiem tra neu la enter -> stop
     	cmpb $10, %al
     	je read_done
 
     	incl %ebx
-    	jmp read_loop
+    	jmp read_loop 		#Read tiep
 
 read_done:
-    	movb $0, (%esi, %ebx, 1)
+    	movb $0, (%esi, %ebx, 1) #Them \0 cuoi buffer
     	popl %esi
     	popl %ebx
     	movl %ebp, %esp
     	popl %ebp
     	ret
 
+#Chuyen ky tu so thanh so nguyen
 atoi:
     	pushl %ebp
     	movl %esp, %ebp
     	pushl %ebx
     	pushl %esi
 
-    	movl 8(%ebp), %esi
-    	xorl %eax, %eax
-    	xorl %ecx, %ecx
+    	movl 8(%ebp), %esi	#Lay dia chi chuoi can doi
+    	xorl %eax, %eax		#%eax=0
+    	xorl %ecx, %ecx		#%ecx la so duong=0, am=1
 
-    	movb (%esi), %bl
-    	cmpb $45, %bl
+    	movb (%esi), %bl	#Ki tu dau tien cua chuoi
+    	cmpb $45, %bl		#So sanh co dau am khong
     	jne parse_loop
-    	movl $1, %ecx
-    	incl %esi
+    	movl $1, %ecx		#eax=1 (so am)
+    	incl %esi		
 
+#Kiem tra cac truong hop ket thuc chuoi
 parse_loop:
     	movzbl (%esi), %ebx
-    	cmpb $0, %bl
+    	cmpb $0, %bl		#\0
     	je atoi_done
-    	cmpb $10, %bl
+    	cmpb $10, %bl		#\n
     	je atoi_done
-    	cmpb $48, %bl
+    	cmpb $48, %bl		#Nho hon ascii 48 la so 0
     	jl atoi_done
-    	cmpb $57, %bl
+    	cmpb $57, %bl		#Lon hon acsii 57 la so 9
    	jg atoi_done
 
-    	subl $48, %ebx
+    	subl $48, %ebx		#Chuyen acsii sang so
     	imull $10, %eax
     	addl %ebx, %eax
     	incl %esi
     	jmp parse_loop
 
+#Kiem tra neu la so am thi doi dau #eax 
 atoi_done:
     	cmpl $1, %ecx
     	jne atoi_exit
@@ -242,26 +250,26 @@ atoi_exit:
 print_int:
     	pushl %ebp
     	movl %esp, %ebp
-    	subl $16, %esp
+    	subl $16, %esp		#16 bytes stack tam luu chuyen doi
     	pushl %ebx
     	pushl %esi
     	pushl %edi
 
-    	movl 8(%ebp), %eax
-    	leal -1(%ebp), %esi
+    	movl 8(%ebp), %eax	#Lay so can in
+    	leal -1(%ebp), %esi	#Con tro ve cuoi stack
     	movb $0, (%esi)
 
-    	xorl %edi, %edi
+    	xorl %edi, %edi		#Kiem tra flag so am
     	cmpl $0, %eax
     	jge convert_loop
     	movl $1, %edi
     	negl %eax
 
 convert_loop:
-    	xorl %edx, %edx
+    	xorl %edx, %edx		#Delete edx chuan bi chia lay du
     	movl $10, %ebx
     	divl %ebx
-    	addl $48, %edx
+    	addl $48, %edx		#Chuyen so du sang ascii
 
     	decl %esi
     	movb %dl, (%esi)
@@ -269,18 +277,18 @@ convert_loop:
     	cmpl $0, %eax
     	jg convert_loop
 
-    	cmpl $1, %edi
+    	cmpl $1, %edi		#Kiem tra so am
     	jne print_out
     	decl %esi
-    	movb $45, (%esi)
+    	movb $45, (%esi)	
 
 print_out:
-    	leal -1(%ebp), %edx
+    	leal -1(%ebp), %edx	#Do dai chuoi can in
     	subl %esi, %edx
 
-    	movl $4, %eax
-    	movl $1, %ebx
-    	movl %esi, %ecx
+    	movl $4, %eax		#sys_write(4)
+    	movl $1, %ebx		#stdout
+    	movl %esi, %ecx	
     	int $0x80
 
     	popl %edi
